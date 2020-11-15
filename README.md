@@ -1,6 +1,6 @@
 # Gatling-Kafka ![](https://github.com/mnogu/gatling-kafka/workflows/Scala%20CI/badge.svg)
 
-An unofficial [Gatling](http://gatling.io/) 3.3.1 stress test plugin
+An unofficial [Gatling](http://gatling.io/) 3.4.1 stress test plugin
 for [Apache Kafka](http://kafka.apache.org/) 2.4.0 protocol.
 
 This plugin supports the Kafka producer API only

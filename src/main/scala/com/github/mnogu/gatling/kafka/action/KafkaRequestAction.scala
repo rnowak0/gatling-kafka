@@ -8,8 +8,8 @@ import io.gatling.core.session._
 import io.gatling.commons.util.DefaultClock
 import io.gatling.commons.validation.Validation
 import io.gatling.core.CoreComponents
+import io.gatling.core.stats.StatsEngine
 import io.gatling.core.util.NameGen
-import io.gatling.core.stats.message.ResponseTimings
 import org.apache.kafka.clients.producer._
 
 
@@ -21,9 +21,9 @@ class KafkaRequestAction[K,V]( val producer: KafkaProducer[K,V],
                                val next: Action )
   extends ExitableAction with NameGen {
 
-  val statsEngine = coreComponents.statsEngine
+  val statsEngine: StatsEngine = coreComponents.statsEngine
   val clock = new DefaultClock
-  override val name = genName("kafkaRequest")
+  override val name:String = genName("kafkaRequest")
 
   override def execute(session: Session): Unit = recover(session) {
 
@@ -39,7 +39,7 @@ class KafkaRequestAction[K,V]( val producer: KafkaProducer[K,V],
 
       outcome.onFailure(
         errorMessage =>
-          statsEngine.reportUnbuildableRequest(session, requestName, errorMessage)
+          statsEngine.reportUnbuildableRequest(session.scenario,List(), requestName, errorMessage)
       )
 
       outcome
@@ -71,7 +71,8 @@ class KafkaRequestAction[K,V]( val producer: KafkaProducer[K,V],
 
           val requestEndDate = clock.nowMillis
           statsEngine.logResponse(
-            session,
+            session.scenario,
+            List(),
             requestName,
             startTimestamp = requestStartDate,
             endTimestamp = requestEndDate,
@@ -81,7 +82,9 @@ class KafkaRequestAction[K,V]( val producer: KafkaProducer[K,V],
           )
 
           if (throttled) {
-            coreComponents.throttler.throttle(session.scenario, () => next ! session)
+            coreComponents.throttler.foreach {
+              throttler => throttler.throttle(session.scenario, () => next ! session)
+            }
           } else {
             next ! session
           }
